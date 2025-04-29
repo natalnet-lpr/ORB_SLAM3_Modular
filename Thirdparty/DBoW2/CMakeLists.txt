@@ -19,7 +19,8 @@ set(SRCS_DBOW2
   DBoW2/BowVector.cpp
   DBoW2/FORB.cpp      
   DBoW2/FeatureVector.cpp
-  DBoW2/ScoringObject.cpp)
+  DBoW2/ScoringObject.cpp
+  DBoW2/QueryResults.cpp)
 
 set(HDRS_DUTILS
   DUtils/Random.h
@@ -43,3 +44,8 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 add_library(DBoW2 SHARED ${SRCS_DBOW2} ${SRCS_DUTILS})
 target_link_libraries(DBoW2 ${OpenCV_LIBS})
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+add_executable(load_test demo/load_test.cpp)
+set_target_properties(load_test PROPERTIES CXX_STANDARD 11)
+target_link_libraries(load_test DBoW2 ${OpenCV_LIBS})

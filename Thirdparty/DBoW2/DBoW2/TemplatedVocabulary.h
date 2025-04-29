@@ -19,6 +19,9 @@
 
 #include <cassert>
 
+#include <iostream>
+#include <chrono>
+#include <iomanip>
 #include <vector>
 #include <numeric>
 #include <fstream>
@@ -1340,8 +1343,15 @@ bool TemplatedVocabulary<TDescriptor,F>::loadFromTextFile(const std::string &fil
     ifstream f;
     f.open(filename.c_str());
 	
-    if(f.eof())
-	return false;
+    cout << fixed << setprecision(8);
+    if(!f.is_open() || f.eof())
+    {
+      cerr << "Could not load vocabulary file " << filename << ". Exiting.\n";
+      return false;
+    }
+    else{
+      cout << "Using vocabulary file " << filename << endl;
+    }
 
     m_words.clear();
     m_nodes.clear();
@@ -1401,7 +1411,11 @@ bool TemplatedVocabulary<TDescriptor,F>::loadFromTextFile(const std::string &fil
             ssnode >> sElement;
             ssd << sElement << " ";
 	}
+        //std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
         F::fromString(m_nodes[nid].descriptor, ssd.str());
+        //std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+        //double time = std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
+        //cout << "Time: " << time << " seconds." << endl;
 
         ssnode >> m_nodes[nid].weight;
 
@@ -1591,12 +1605,13 @@ void TemplatedVocabulary<TDescriptor,F>::load(const cv::FileStorage &fs,
   m_nodes.resize(fn.size() + 1); // +1 to include root
   m_nodes[0].id = 0;
 
-  for(unsigned int i = 0; i < fn.size(); ++i)
+  cv::FileNodeIterator end = fn.end();
+  for(cv::FileNodeIterator it = fn.begin(); it < end; ++it)
   {
-    NodeId nid = (int)fn[i]["nodeId"];
-    NodeId pid = (int)fn[i]["parentId"];
-    WordValue weight = (WordValue)fn[i]["weight"];
-    string d = (string)fn[i]["descriptor"];
+    NodeId nid = (int)(*it)["nodeId"];
+    NodeId pid = (int)(*it)["parentId"];
+    WordValue weight = (WordValue)(*it)["weight"];
+    std::string d = (std::string)(*it)["descriptor"];
     
     m_nodes[nid].id = nid;
     m_nodes[nid].parent = pid;
@@ -1611,10 +1626,10 @@ void TemplatedVocabulary<TDescriptor,F>::load(const cv::FileStorage &fs,
   
   m_words.resize(fn.size());
 
-  for(unsigned int i = 0; i < fn.size(); ++i)
+  for(cv::FileNodeIterator it = fn.begin(); it < end; ++it)
   {
-    NodeId wid = (int)fn[i]["wordId"];
-    NodeId nid = (int)fn[i]["nodeId"];
+    NodeId wid = (int)(*it)["wordId"];
+    NodeId nid = (int)(*it)["nodeId"];
     
     m_nodes[nid].word_id = wid;
     m_words[wid] = &m_nodes[nid];
