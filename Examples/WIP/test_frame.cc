@@ -88,11 +88,19 @@ int main(int argc, char **argv)
     //gray, timestamp, extractor, voc, GeometricCamera, dist, bf, depth
     Frame frame = Frame(img, ts, extractor, vocabulary,
                         camModel, distCoef, bf, thDepth);
+    frame.ComputeBoW();
 
-    //Display some Frame info
+    //Show keypoints using openCV
+    cv::Mat imgWithKeypoints;
+    img.copyTo(imgWithKeypoints);
+    cv::drawKeypoints(img, frame.mvKeys, imgWithKeypoints, cv::Scalar::all(-1), cv::DrawMatchesFlags::DEFAULT);
+    cv::imshow("Keypoints", imgWithKeypoints);
+    cv::waitKey(0);
+
+    //Display some info
     cout << "Frame ID: " << frame.mnId << endl;
     cout << "Number of Keypoints: " << frame.N << endl;
-    cout << "First KeyPoint: " << frame.mvKeys[0].pt << endl;
+    cout << "Number of mappoints: " << frame.mvpMapPoints.size() << endl;
 
     return 0;
 }
