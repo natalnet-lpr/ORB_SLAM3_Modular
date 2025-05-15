@@ -276,13 +276,13 @@ add_executable(test_frame
         Examples/WIP/test_frame.cc)
 target_link_libraries(test_frame ${PROJECT_NAME})
 
-add_executable(test_keyframedb
-        Examples/WIP/test_keyframedb.cc)
-target_link_libraries(test_keyframedb ${PROJECT_NAME})
+add_executable(test_tracking
+        Examples/WIP/test_tracking.cc)
+target_link_libraries(test_tracking ${PROJECT_NAME})
 
-add_executable(test_mappoint
-        Examples/WIP/test_mappoint.cc)
-target_link_libraries(test_mappoint ${PROJECT_NAME})
+add_executable(map_viewer
+        Examples/WIP/map_viewer.cc)
+target_link_libraries(map_viewer ${PROJECT_NAME})
 
 #Old examples
 

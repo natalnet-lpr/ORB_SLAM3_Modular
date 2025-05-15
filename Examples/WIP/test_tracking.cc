@@ -12,19 +12,52 @@
 using namespace std;
 using namespace ORB_SLAM3;
 
+void LoadImages(const string &strPathToSequence, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)
+{
+    ifstream fTimes;
+    string strPathTimeFile = strPathToSequence + "/times.txt";
+    fTimes.open(strPathTimeFile.c_str());
+    while(!fTimes.eof())
+    {
+        string s;
+        getline(fTimes,s);
+        if(!s.empty())
+        {
+            stringstream ss;
+            ss << s;
+            double t;
+            ss >> t;
+            vTimestamps.push_back(t);
+        }
+    }
+
+    string strPrefixLeft = strPathToSequence + "/image_0/";
+
+    const int nTimes = vTimestamps.size();
+    vstrImageFilenames.resize(nTimes);
+
+    for(int i=0; i<nTimes; i++)
+    {
+        stringstream ss;
+        ss << setfill('0') << setw(6) << i;
+        vstrImageFilenames[i] = strPrefixLeft + ss.str() + ".png";
+    }
+}
+
 int main(int argc, char **argv)
 {
-    string vocabularyFile, settingsFile, imageFile;
+    string vocabularyFile, settingsFile;
+    vector<string> vstrImageFilenames;
+    vector<double> vTimestamps;
 
     if(argc != 4)
     {
-        cerr << "Usage: ./test_frame path_to_vocabulary path_to_settings path_to_image" << endl;
+        cerr << "Usage: ./test_tracking path_to_vocabulary path_to_settings path_to_sequence" << endl;
         return 1;
     }
 
     vocabularyFile = argv[1];
     settingsFile = argv[2];
-    imageFile = argv[3];
 
     //Load settings
     cv::FileStorage fsSettings(settingsFile, cv::FileStorage::READ);
@@ -36,7 +69,6 @@ int main(int argc, char **argv)
 
     //Load ORB Vocabulary
     cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
-
     ORBVocabulary* vocabulary = new ORBVocabulary();
     bool load_vocab = vocabulary->loadFromTextFile(vocabularyFile);
     if(!load_vocab)
@@ -47,12 +79,8 @@ int main(int argc, char **argv)
     }
     cout << "Vocabulary loaded!" << endl << endl;
 
-    //Load image
-    cv::Mat img = cv::imread(imageFile, cv::IMREAD_GRAYSCALE);
-    if (img.empty()) {
-        cerr << "ERROR: Could not load image at: " << imageFile << endl;
-        return -1;
-    }
+    ///Retrieve paths to images
+    LoadImages(string(argv[3]), vstrImageFilenames, vTimestamps);
 
     //Configure ORB extractor
     int nFeatures = fsSettings["ORBextractor.nFeatures"];
@@ -77,33 +105,39 @@ int main(int argc, char **argv)
     distCoef.at<double>(0,3) = fsSettings["Camera1.p2"];
     distCoef.at<double>(0,4) = fsSettings["Camera1.k3"];
 
-    //Timestamp
-    double ts = 0.0;
     //Baseline
     double bf = 1.0;
     //Depth thr.
     double thDepth = 1.0;
 
-    //Create a Frame:
-    //gray, timestamp, extractor, voc, GeometricCamera, dist, bf, depth
-    //NOTE: vocabulary is not necessary to compute keypoints, only to compute the BoW
-    Frame frame = Frame(img, ts, extractor, vocabulary,
-                        camModel, distCoef, bf, thDepth);
-    
-    //frame.ComputeBoW();
-    //cout << "BOW: " << frame.mBowVec << endl;
+    //Process image sequence
+    for(size_t i=0; i<vstrImageFilenames.size(); i++)
+    {
+        cv::Mat img = cv::imread(vstrImageFilenames[i], cv::IMREAD_GRAYSCALE);
+        if(img.empty())
+        {
+            cerr << "ERROR: Could not load image at: " << vstrImageFilenames[i] << endl;
+            return -1;
+        }
 
-    //Show keypoints using openCV
-    cv::Mat imgWithKeypoints;
-    img.copyTo(imgWithKeypoints);
-    cv::drawKeypoints(img, frame.mvKeys, imgWithKeypoints, cv::Scalar::all(-1), cv::DrawMatchesFlags::DEFAULT);
-    cv::imshow("Keypoints", imgWithKeypoints);
-    cv::waitKey(0);
+        //Get timestamp
+        double ts = vTimestamps[i];
 
-    //Display some info
-    cout << "Frame ID: " << frame.mnId << endl;
-    cout << "Number of Keypoints: " << frame.N << endl;
-    cout << "Number of mappoints: " << frame.mvpMapPoints.size() << endl;
+        //Create a Frame:
+        Frame frame = Frame(img, ts, extractor, vocabulary, camModel, distCoef, bf, thDepth);
+
+        //Show keypoints using openCV
+        cv::Mat imgWithKeypoints;
+        img.copyTo(imgWithKeypoints);
+        cv::drawKeypoints(img, frame.mvKeys, imgWithKeypoints, cv::Scalar::all(-1), cv::DrawMatchesFlags::DEFAULT);
+        cv::imshow("Keypoints", imgWithKeypoints);
+        cv::waitKey(0);
+
+        //Display some info
+        cout << "Frame ID: " << frame.mnId << endl;
+        cout << "Number of Keypoints: " << frame.N << endl;
+        cout << "Number of mappoints: " << frame.mvpMapPoints.size() << endl;
+    }
 
     //Clean up
     delete vocabulary;

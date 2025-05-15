@@ -1,6 +1,16 @@
 %YAML:1.0
 
 #--------------------------------------------------------------------------------------------
+# System config
+#--------------------------------------------------------------------------------------------
+
+# If the LoadFile doesn't exist, the system give a message and create a new Atlas from scratch
+System.LoadAtlasFromFile: "atlas_KITTI_00"
+
+# The store file is created from the current session, if a file with the same name exists it is deleted
+#System.SaveAtlasToFile: "atlas_KITTI_00"
+
+#--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
 File.version: "1.0"
