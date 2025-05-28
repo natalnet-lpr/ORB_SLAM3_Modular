@@ -190,7 +190,6 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
         return;
 
     const vector<KeyFrame*> vpKFs = pActiveMap->GetAllKeyFrames();
-
     if(bDrawKF)
     {
         for(size_t i=0; i<vpKFs.size(); i++)
@@ -390,6 +389,20 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
                 glEnd();
 
                 glPopMatrix();
+
+                //Draw MapPoints of inactive maps
+                glPointSize(mPointSize);
+                glBegin(GL_POINTS);
+                glColor3f(0.5,0.5,0.5);
+                auto sMapPoints = pKF->GetMapPoints();
+                for(MapPoint* pmPi: sMapPoints)
+                {
+                    if(pmPi->isBad())
+                        continue;
+                    Eigen::Matrix<float,3,1> pos = pmPi->GetWorldPos();
+                    glVertex3f(pos(0),pos(1),pos(2));
+                }
+                glEnd();
             }
         }
     }
