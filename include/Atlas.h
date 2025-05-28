@@ -123,7 +123,7 @@ public:
     void SetImuInitialized();
     bool isImuInitialized();
 
-    // Function for garantee the correction of serialization of this object
+    // Function to garantee the correction of serialization of this object
     void PreSave();
     void PostLoad();
 
@@ -138,6 +138,8 @@ public:
     long unsigned int GetNumLivedKF();
 
     long unsigned int GetNumLivedMP();
+
+    void Print();
 
 protected:
 

@@ -410,4 +410,19 @@ map<long unsigned int, KeyFrame*> Atlas::GetAtlasKeyframes()
     return mpIdKFs;
 }
 
+void Atlas::Print()
+{
+    unique_lock<mutex> lock(mMutexAtlas);
+    
+    cout << "Atlas has " << mspMaps.size() << " maps" << endl;
+    cout << "Current map: " << mpCurrentMap->GetId() << endl;
+    cout << "Last init KF id: " << mnLastInitKFidMap << endl;
+
+    for(Map* pMap : mspMaps)
+    {
+        cout << "\tMap ID: " << pMap->GetId() << endl;
+        cout << "\tKeyFrames in map: " << pMap->KeyFramesInMap() << endl;
+        cout << "\tMapPoints in map: " << pMap->MapPointsInMap() << endl;
+    }
+}
 } //namespace ORB_SLAM3

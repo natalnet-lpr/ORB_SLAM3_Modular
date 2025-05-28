@@ -1543,5 +1543,10 @@ string System::CalculateCheckSum(string filename, int type)
     return checksum;
 }
 
+void System::PrintAtlas()
+{
+    mpAtlas->Print();
+}
+
 } //namespace ORB_SLAM
 
