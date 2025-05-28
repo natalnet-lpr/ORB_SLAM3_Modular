@@ -359,7 +359,11 @@ void Map::SetLastMapChange(int currentChangeId)
 void Map::PreSave(std::set<GeometricCamera*> &spCams)
 {
     int nMPWithoutObs = 0;
-    for(MapPoint* pMPi : mspMapPoints)
+
+    std::set<MapPoint*> tmp_mspMapPoints1;
+    tmp_mspMapPoints1.insert(mspMapPoints.begin(), mspMapPoints.end());
+
+    for(MapPoint* pMPi : tmp_mspMapPoints1)
     {
         if(!pMPi || pMPi->isBad())
             continue;
@@ -387,10 +391,13 @@ void Map::PreSave(std::set<GeometricCamera*> &spCams)
         mvBackupKeyFrameOriginsId.push_back(mvpKeyFrameOrigins[i]->mnId);
     }
 
-
     // Backup of MapPoints
     mvpBackupMapPoints.clear();
-    for(MapPoint* pMPi : mspMapPoints)
+
+    std::set<MapPoint*> tmp_mspMapPoints2;
+    tmp_mspMapPoints2.insert(mspMapPoints.begin(), mspMapPoints.end());
+
+    for(MapPoint* pMPi : tmp_mspMapPoints2)
     {
         if(!pMPi || pMPi->isBad())
             continue;
@@ -421,7 +428,6 @@ void Map::PreSave(std::set<GeometricCamera*> &spCams)
     {
         mnBackupKFlowerID = mpKFlowerID->mnId;
     }
-
 }
 
 void Map::PostLoad(KeyFrameDatabase* pKFDB, ORBVocabulary* pORBVoc/*, map<long unsigned int, KeyFrame*>& mpKeyFrameId*/, map<unsigned int, GeometricCamera*> &mpCams)
@@ -468,7 +474,6 @@ void Map::PostLoad(KeyFrameDatabase* pKFDB, ORBVocabulary* pORBVoc/*, map<long u
         pKFi->PostLoad(mpKeyFrameId, mpMapPointId, mpCams);
         pKFDB->add(pKFi);
     }
-
 
     if(mnBackupKFinitialID != -1)
     {
