@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 {
     if(argc != 3)
     {
-        cerr << endl << "Usage: ./mono_kitti path_to_vocabulary path_to_settings" << endl;
+        cerr << endl << "Usage: ./map_viewer path_to_vocabulary path_to_settings" << endl;
         return 1;
     }
 
