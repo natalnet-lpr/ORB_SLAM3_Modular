@@ -284,6 +284,10 @@ add_executable(map_viewer
         Examples/WIP/map_viewer.cc)
 target_link_libraries(map_viewer ${PROJECT_NAME})
 
+add_executable(image_localizer
+        Examples/WIP/image_localizer.cc)
+target_link_libraries(image_localizer ${PROJECT_NAME})
+
 #Old examples
 
 # RGB-D examples

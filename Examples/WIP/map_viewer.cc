@@ -20,11 +20,8 @@ int main(int argc, char **argv)
 
     //Create SLAM system. This is also the visualizer.
     ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::MONOCULAR, true);
-    //Set system to localization only mode
-    SLAM.ActivateLocalizationMode();
     
     SLAM.PrintAtlas();
-    SLAM.PrintStatus();
 
     while(true); //Necessary to keep the program running
 

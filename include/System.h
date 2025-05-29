@@ -186,6 +186,8 @@ public:
 
     float GetImageScale();
 
+    void SetStepByStep(bool bSet);
+
     void PrintStatus();
 
     void PrintAtlas();

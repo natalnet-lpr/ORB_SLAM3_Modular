@@ -1267,6 +1267,11 @@ float System::GetImageScale()
     return mpTracker->GetImageScale();
 }
 
+void System::SetStepByStep(bool bSet)
+{
+    mpTracker->SetStepByStep(bSet);
+}
+
 #ifdef REGISTER_TIMES
 void System::InsertRectTime(double& time)
 {
@@ -1528,6 +1533,7 @@ void System::PrintStatus()
             cout << "Unknown" << endl;
     }
     cout << "\tLocalization mode: " << mpTracker->mbOnlyTracking << endl;
+    cout << "\tStep by step mode: " << mpTracker->GetStepByStep() << endl;
 }
 
 void System::PrintAtlas()
