@@ -186,6 +186,8 @@ public:
 
     float GetImageScale();
 
+    void PrintStatus();
+
     void PrintAtlas();
 
 #ifdef REGISTER_TIMES
@@ -200,6 +202,12 @@ private:
     bool LoadAtlas(int type);
 
     string CalculateCheckSum(string filename, int type);
+
+    // Checks if localization mode is activated/deactivated
+    void CheckModeChange();
+
+    // Checks if a reset is requested
+    void CheckReset();
 
     // Input sensor
     eSensor mSensor;

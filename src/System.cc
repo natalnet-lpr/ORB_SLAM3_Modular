@@ -16,8 +16,6 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-
 #include "System.h"
 #include "Converter.h"
 #include <thread>
@@ -236,7 +234,6 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     // Fix verbosity
     Verbose::SetTh(Verbose::VERBOSITY_QUIET);
-
 }
 
 Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
@@ -266,54 +263,15 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
         imRightToFeed = imRight.clone();
     }
 
-    // Check mode change
-    {
-        unique_lock<mutex> lock(mMutexMode);
-        if(mbActivateLocalizationMode)
-        {
-            mpLocalMapper->RequestStop();
+    CheckModeChange();
 
-            // Wait until Local Mapping has effectively stopped
-            while(!mpLocalMapper->isStopped())
-            {
-                usleep(1000);
-            }
-
-            mpTracker->InformOnlyTracking(true);
-            mbActivateLocalizationMode = false;
-        }
-        if(mbDeactivateLocalizationMode)
-        {
-            mpTracker->InformOnlyTracking(false);
-            mpLocalMapper->Release();
-            mbDeactivateLocalizationMode = false;
-        }
-    }
-
-    // Check reset
-    {
-        unique_lock<mutex> lock(mMutexReset);
-        if(mbReset)
-        {
-            mpTracker->Reset();
-            mbReset = false;
-            mbResetActiveMap = false;
-        }
-        else if(mbResetActiveMap)
-        {
-            mpTracker->ResetActiveMap();
-            mbResetActiveMap = false;
-        }
-    }
+    CheckReset();
 
     if (mSensor == System::IMU_STEREO)
         for(size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
             mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-    // std::cout << "start GrabImageStereo" << std::endl;
     Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed,imRightToFeed,timestamp,filename);
-
-    // std::cout << "out grabber" << std::endl;
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
@@ -341,45 +299,9 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
         cv::resize(depthmap,imDepthToFeed,settings_->newImSize());
     }
 
-    // Check mode change
-    {
-        unique_lock<mutex> lock(mMutexMode);
-        if(mbActivateLocalizationMode)
-        {
-            mpLocalMapper->RequestStop();
+    CheckModeChange();
 
-            // Wait until Local Mapping has effectively stopped
-            while(!mpLocalMapper->isStopped())
-            {
-                usleep(1000);
-            }
-
-            mpTracker->InformOnlyTracking(true);
-            mbActivateLocalizationMode = false;
-        }
-        if(mbDeactivateLocalizationMode)
-        {
-            mpTracker->InformOnlyTracking(false);
-            mpLocalMapper->Release();
-            mbDeactivateLocalizationMode = false;
-        }
-    }
-
-    // Check reset
-    {
-        unique_lock<mutex> lock(mMutexReset);
-        if(mbReset)
-        {
-            mpTracker->Reset();
-            mbReset = false;
-            mbResetActiveMap = false;
-        }
-        else if(mbResetActiveMap)
-        {
-            mpTracker->ResetActiveMap();
-            mbResetActiveMap = false;
-        }
-    }
+    CheckReset();
 
     if (mSensor == System::IMU_RGBD)
         for(size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
@@ -391,6 +313,7 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+
     return Tcw;
 }
 
@@ -416,46 +339,9 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
         imToFeed = resizedIm;
     }
 
-    // Check mode change
-    {
-        unique_lock<mutex> lock(mMutexMode);
-        if(mbActivateLocalizationMode)
-        {
-            mpLocalMapper->RequestStop();
+    CheckModeChange();
 
-            // Wait until Local Mapping has effectively stopped
-            while(!mpLocalMapper->isStopped())
-            {
-                usleep(1000);
-            }
-
-            mpTracker->InformOnlyTracking(true);
-            mbActivateLocalizationMode = false;
-        }
-        if(mbDeactivateLocalizationMode)
-        {
-            mpTracker->InformOnlyTracking(false);
-            mpLocalMapper->Release();
-            mbDeactivateLocalizationMode = false;
-        }
-    }
-
-    // Check reset
-    {
-        unique_lock<mutex> lock(mMutexReset);
-        if(mbReset)
-        {
-            mpTracker->Reset();
-            mbReset = false;
-            mbResetActiveMap = false;
-        }
-        else if(mbResetActiveMap)
-        {
-            cout << "SYSTEM-> Reseting active map in monocular case" << endl;
-            mpTracker->ResetActiveMap();
-            mbResetActiveMap = false;
-        }
-    }
+    CheckReset();
 
     if (mSensor == System::IMU_MONOCULAR)
         for(size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
@@ -471,18 +357,18 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
     return Tcw;
 }
 
-
-
 void System::ActivateLocalizationMode()
 {
     unique_lock<mutex> lock(mMutexMode);
     mbActivateLocalizationMode = true;
+    cout << ">>> Activating localization mode" << endl;
 }
 
 void System::DeactivateLocalizationMode()
 {
     unique_lock<mutex> lock(mMutexMode);
     mbDeactivateLocalizationMode = true;
+    cout << ">>> Deactivating localization mode" << endl;
 }
 
 bool System::MapChanged()
@@ -1541,6 +1427,107 @@ string System::CalculateCheckSum(string filename, int type)
     }
 
     return checksum;
+}
+
+void System::CheckModeChange()
+{
+    unique_lock<mutex> lock(mMutexMode);
+    if(mbActivateLocalizationMode)
+    {
+        cout << ">>> Activating Localization Mode" << endl;
+
+        mpLocalMapper->RequestStop();
+
+        // Wait until Local Mapping has effectively stopped
+        while(!mpLocalMapper->isStopped())
+        {
+            usleep(1000);
+        }
+
+        mpTracker->InformOnlyTracking(true);
+        mbActivateLocalizationMode = false;
+    }
+    if(mbDeactivateLocalizationMode)
+    {
+        cout << ">>> Deactivating Localization Mode" << endl;
+
+        mpTracker->InformOnlyTracking(false);
+        mpLocalMapper->Release();
+        mbDeactivateLocalizationMode = false;
+    }
+}
+
+void System::CheckReset()
+{
+    unique_lock<mutex> lock(mMutexReset);
+    if(mbReset)
+    {
+        mpTracker->Reset();
+        mbReset = false;
+        mbResetActiveMap = false;
+    }
+    else if(mbResetActiveMap)
+    {
+        mpTracker->ResetActiveMap();
+        mbResetActiveMap = false;
+    }
+}
+
+void System::PrintStatus()
+{
+    cout << ">>> System Status:" << endl;
+    cout << "\tSensor: ";
+    switch(mSensor)
+    {
+        case MONOCULAR:
+            cout << "Monocular" << endl;
+            break;
+        case STEREO:
+            cout << "Stereo" << endl;
+            break;
+        case RGBD:
+            cout << "RGB-D" << endl;
+            break;
+        case IMU_MONOCULAR:
+            cout << "Monocular + IMU" << endl;
+            break;
+        case IMU_STEREO:
+            cout << "Stereo + IMU" << endl;
+            break;
+        case IMU_RGBD:
+            cout << "RGB-D + IMU" << endl;
+            break;
+        default:
+            cout << "Unknown" << endl;
+    }
+    cout << "\tTracking State: ";
+    switch(mTrackingState)
+    {
+        case Tracking::SYSTEM_NOT_READY:
+            cout << "System not ready" << endl;
+            break;
+        case Tracking::NO_IMAGES_YET:
+            cout << "No images yet" << endl;
+            break;
+        case Tracking::NOT_INITIALIZED:
+            cout << "Not initialized" << endl;
+            break;
+        case Tracking::OK:
+            cout << "OK" << endl;
+            break;
+        case Tracking::RECENTLY_LOST:
+            cout << "Recently LOST" << endl;
+            break;
+        case Tracking::LOST:
+            cout << "LOST" << endl;
+            break;
+        case Tracking::OK_KLT:
+            cout << "OK KLT" << endl;
+            break;
+        default:
+            cout << "Unknown" << endl;
+    }
+    cout << "\tLocalization mode: " << mpTracker->mbOnlyTracking << endl;
 }
 
 void System::PrintAtlas()
