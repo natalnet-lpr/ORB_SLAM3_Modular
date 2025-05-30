@@ -1817,6 +1817,7 @@ void Tracking::Track()
 
     if(mState!=NO_IMAGES_YET)
     {
+        cout << "TRACKING: NO IMAGES YET\n"; 
         if(mLastFrame.mTimeStamp>mCurrentFrame.mTimeStamp)
         {
             cerr << "ERROR: Frame with a timestamp older than previous frame detected!" << endl;
@@ -1898,6 +1899,7 @@ void Tracking::Track()
 
     if(mState==NOT_INITIALIZED)
     {
+        cout << "TRACKING: NOT INITIALIZED\n";
         if(mSensor==System::STEREO || mSensor==System::RGBD || mSensor==System::IMU_STEREO || mSensor==System::IMU_RGBD)
         {
             StereoInitialization();
@@ -1911,6 +1913,7 @@ void Tracking::Track()
 
         if(mState!=OK) // If rightly initialized, mState=OK
         {
+            cout << "TRACKING: initialization failed\n";
             mLastFrame = Frame(mCurrentFrame);
             return;
         }
@@ -1932,6 +1935,7 @@ void Tracking::Track()
         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
         if(!mbOnlyTracking)
         {
+            cout << "TRACKING: normal mode 1\n";
 
             // State OK
             // Local Mapping is activated. This is the normal behaviour, unless
@@ -1958,6 +1962,8 @@ void Tracking::Track()
 
                 if (!bOK)
                 {
+                    cout << "TRACKING: RefKF or Motion Model failed\n";
+
                     if ( mCurrentFrame.mnId<=(mnLastRelocFrameId+mnFramesToResetIMU) &&
                          (mSensor==System::IMU_MONOCULAR || mSensor==System::IMU_STEREO || mSensor == System::IMU_RGBD))
                     {
@@ -1999,6 +2005,8 @@ void Tracking::Track()
                     }
                     else
                     {
+                        cout << "TRACKING: attempting relocalization\n";
+
                         // Relocalization
                         bOK = Relocalization();
                         //std::cout << "mCurrentFrame.mTimeStamp:" << to_string(mCurrentFrame.mTimeStamp) << std::endl;
@@ -2013,6 +2021,7 @@ void Tracking::Track()
                 }
                 else if (mState == LOST)
                 {
+                    cout << "TRACKING: lost\n";
 
                     Verbose::PrintMess("A new map is started...", Verbose::VERBOSITY_NORMAL);
 
@@ -2035,9 +2044,12 @@ void Tracking::Track()
         }
         else
         {
+            cout << "TRACKING: localization only mode 1\n";
+
             // Localization Mode: Local Mapping is deactivated (TODO Not available in inertial mode)
             if(mState==LOST)
             {
+                cout << "TRACKING: lost\n";
                 if(mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
                     Verbose::PrintMess("IMU. State LOST", Verbose::VERBOSITY_NORMAL);
                 bOK = Relocalization();
@@ -2046,18 +2058,22 @@ void Tracking::Track()
             {
                 if(!mbVO)
                 {
+                    cout << "TRACKING: enough points tracked\n";
                     // In last frame we tracked enough MapPoints in the map
                     if(mbVelocity)
                     {
+                        cout << "TRACKING: Track with motion model\n";
                         bOK = TrackWithMotionModel();
                     }
                     else
                     {
+                        cout << "TRACKING: ref. KF\n";
                         bOK = TrackReferenceKeyFrame();
                     }
                 }
                 else
                 {
+                    cout << "TRACKING: not enough points tracked\n";
                     // In last frame we tracked mainly "visual odometry" points.
 
                     // We compute two camera poses, one from motion model and one doing relocalization.
@@ -2071,21 +2087,25 @@ void Tracking::Track()
                     Sophus::SE3f TcwMM;
                     if(mbVelocity)
                     {
+                        cout << "TRACKING: Track with motion model\n";
                         bOKMM = TrackWithMotionModel();
                         vpMPsMM = mCurrentFrame.mvpMapPoints;
                         vbOutMM = mCurrentFrame.mvbOutlier;
                         TcwMM = mCurrentFrame.GetPose();
                     }
+                    cout << "TRACKING: attempting relocalization\n";
                     bOKReloc = Relocalization();
 
                     if(bOKMM && !bOKReloc)
                     {
+                        cout << "TRACKING: relocalization failed\n";
                         mCurrentFrame.SetPose(TcwMM);
                         mCurrentFrame.mvpMapPoints = vpMPsMM;
                         mCurrentFrame.mvbOutlier = vbOutMM;
 
                         if(mbVO)
                         {
+                            cout << "TRACKING: VO ok\n";
                             for(int i =0; i<mCurrentFrame.N; i++)
                             {
                                 if(mCurrentFrame.mvpMapPoints[i] && !mCurrentFrame.mvbOutlier[i])
@@ -2097,6 +2117,7 @@ void Tracking::Track()
                     }
                     else if(bOKReloc)
                     {
+                        cout << "TRACKING: relocalization ok\n";
                         mbVO = false;
                     }
 
@@ -2122,8 +2143,10 @@ void Tracking::Track()
         // If we have an initial estimation of the camera pose and matching. Track the local map.
         if(!mbOnlyTracking)
         {
+            cout << "TRACKING: normal mode 2\n";
             if(bOK)
             {
+                cout << "TRACKING: track local map\n";
                 bOK = TrackLocalMap();
 
             }
@@ -2132,11 +2155,15 @@ void Tracking::Track()
         }
         else
         {
+            cout << "TRACKING: localization only mode 2\n";
             // mbVO true means that there are few matches to MapPoints in the map. We cannot retrieve
             // a local map and therefore we do not perform TrackLocalMap(). Once the system relocalizes
             // the camera we will use the local map again.
             if(bOK && !mbVO)
+            {
+                cout << "TRACKING: track local map\n";
                 bOK = TrackLocalMap();
+            }
         }
 
         if(bOK)
@@ -2155,7 +2182,10 @@ void Tracking::Track()
                 mState=RECENTLY_LOST;
             }
             else
+            {
+                cout << "TRACKING: setting to recently lost\n";
                 mState=RECENTLY_LOST; // visual to lost
+            }
 
             /*if(mCurrentFrame.mnId>mnLastRelocFrameId+mMaxFrames)
             {*/
