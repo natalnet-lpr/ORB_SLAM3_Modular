@@ -45,7 +45,6 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        cout << "Tracking frame " << ni << " (" << tframe << ")\n";
         SLAM.TrackMonocular(im, tframe, vector<ORB_SLAM3::IMU::Point>(), vstrImageFilenames[ni]);
     }
 

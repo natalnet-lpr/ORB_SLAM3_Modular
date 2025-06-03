@@ -1505,33 +1505,7 @@ void System::PrintStatus()
         default:
             cout << "Unknown" << endl;
     }
-    cout << "\tTracking State: ";
-    switch(mTrackingState)
-    {
-        case Tracking::SYSTEM_NOT_READY:
-            cout << "System not ready" << endl;
-            break;
-        case Tracking::NO_IMAGES_YET:
-            cout << "No images yet" << endl;
-            break;
-        case Tracking::NOT_INITIALIZED:
-            cout << "Not initialized" << endl;
-            break;
-        case Tracking::OK:
-            cout << "OK" << endl;
-            break;
-        case Tracking::RECENTLY_LOST:
-            cout << "Recently LOST" << endl;
-            break;
-        case Tracking::LOST:
-            cout << "LOST" << endl;
-            break;
-        case Tracking::OK_KLT:
-            cout << "OK KLT" << endl;
-            break;
-        default:
-            cout << "Unknown" << endl;
-    }
+    mpTracker->PrintState();
     cout << "\tLocalization mode: " << mpTracker->mbOnlyTracking << endl;
     cout << "\tStep by step mode: " << mpTracker->GetStepByStep() << endl;
 }
