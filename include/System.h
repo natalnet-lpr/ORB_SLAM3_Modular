@@ -168,7 +168,7 @@ public:
     void SaveTrajectoryKITTI(const string &filename);
 
     // TODO: Save/Load functions
-    // SaveMap(const string &filename);
+    bool SaveMap(const string &filename);
     // LoadMap(const string &filename);
 
     // Information from most recent processed frame
@@ -176,6 +176,12 @@ public:
     int GetTrackingState();
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
+    std::vector<MapPoint*> GetAllMapPoints();
+    std::vector<Sophus::SE3f> GetAllKeyframePoses();
+    cv::Mat GetCurrentFrame();
+
+
+    Sophus::SE3f GetCamTwc();
 
     // For debugging
     double GetTimeFromIMUInit();
@@ -200,7 +206,7 @@ public:
 
 private:
 
-    void SaveAtlas(int type);
+    bool SaveAtlas(int type);
     bool LoadAtlas(int type);
 
     string CalculateCheckSum(string filename, int type);

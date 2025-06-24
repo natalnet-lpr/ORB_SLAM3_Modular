@@ -94,6 +94,8 @@ public:
         return mpLastKeyFrame;
     }
 
+    Sophus::SE3f GetCamTwc();
+
     void CreateMapInAtlas();
     //std::mutex mMutexTracks;
 

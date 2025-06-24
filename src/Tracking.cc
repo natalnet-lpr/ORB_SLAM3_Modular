@@ -4134,6 +4134,12 @@ float Tracking::GetImageScale()
     return mImageScale;
 }
 
+Sophus::SE3f Tracking::GetCamTwc()
+{
+    return (mCurrentFrame.GetPose()).inverse();
+}
+
+
 void Tracking::PrintState()
 {
     cout << "Tracking state: ";
