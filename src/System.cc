@@ -1321,7 +1321,7 @@ bool System::SaveAtlas(int type){
 
             if(type == TEXT_FILE) // File text
             {
-                cout << "Starting to write the save text file " << endl;
+                cout << "Starting to write the text file...";
                 std::remove(pathSaveFileName.c_str());
                 std::ofstream ofs(pathSaveFileName, std::ios::binary);
                 boost::archive::text_oarchive oa(ofs);
@@ -1329,18 +1329,18 @@ bool System::SaveAtlas(int type){
                 oa << strVocabularyName;
                 oa << strVocabularyChecksum;
                 oa << mpAtlas;
-                cout << "End to write the save text file" << endl;
+                cout << " ok!" << endl;
             }
             else if(type == BINARY_FILE) // File binary
             {
-                cout << "Starting to write the save binary file" << endl;
+                cout << "Starting to write the binary file..";
                 std::remove(pathSaveFileName.c_str());
                 std::ofstream ofs(pathSaveFileName, std::ios::binary);
                 boost::archive::binary_oarchive oa(ofs);
                 oa << strVocabularyName;
                 oa << strVocabularyChecksum;
                 oa << mpAtlas;
-                cout << "End to write save binary file" << endl;
+                cout << " ok!" << endl;
             }
         }
     }

@@ -1793,9 +1793,8 @@ void Tracking::ResetFrameIMU()
 
 void Tracking::Track()
 {
-    cout << " ----- DEBUG TRACK -----\n";
     PrintState();
-    if (bStepByStep)
+    if(bStepByStep)
     {
         std::cout << "Tracking: Waiting to the next step" << std::endl;
         while(!mbStep && bStepByStep)
@@ -1818,7 +1817,6 @@ void Tracking::Track()
 
     if(mState!=NO_IMAGES_YET)
     {
-        cout << "\tmState is not NO IMAGES YET\n";
         if(mLastFrame.mTimeStamp>mCurrentFrame.mTimeStamp)
         {
             cerr << "ERROR: Frame with a timestamp older than previous frame detected!" << endl;
@@ -1863,9 +1861,7 @@ void Tracking::Track()
 
     if(mState==NO_IMAGES_YET)
     {
-        cout << "\tmState is NO IMAGES YET\n";
         mState = NOT_INITIALIZED;
-        cout << "\tmState is now NOT INITIALIZED\n";
     }
 
     mLastProcessedState=mState;
@@ -1902,20 +1898,17 @@ void Tracking::Track()
 
     if(mState==NOT_INITIALIZED)
     {
-        cout << "\tmState is NOT INITIALIZED\n";
         if(mSensor==System::STEREO || mSensor==System::RGBD || mSensor==System::IMU_STEREO || mSensor==System::IMU_RGBD)
         {
             StereoInitialization();
         }
         else
         {
-            cout << "\tTRACKING: mono init\n";
             MonocularInitialization();
         }
 
         if(mState!=OK) // If rightly initialized, mState=OK
         {
-            cout << "\tTRACKING: initialization failed\n";
             mLastFrame = Frame(mCurrentFrame);
             return;
         }
@@ -1937,14 +1930,11 @@ void Tracking::Track()
         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
         if(!mbOnlyTracking)
         {
-            cout << "\tTRACKING: normal mode 1\n";
-
             // State OK
             // Local Mapping is activated. This is the normal behaviour, unless
             // you explicitly activate the "only tracking" mode.
             if(mState==OK)
             {
-                cout << "\t\tmState is OK\n";
                 // Local Mapping might have changed some MapPoints tracked in last frame
                 CheckReplacedInLastFrame();
 
@@ -1962,33 +1952,27 @@ void Tracking::Track()
                 }
 
 
-                if (!bOK)
+                if(!bOK)
                 {
-                    cout << "\tTRACKING: RefKF or Motion Model failed\n";
-
                     if ( mCurrentFrame.mnId<=(mnLastRelocFrameId+mnFramesToResetIMU) &&
                          (mSensor==System::IMU_MONOCULAR || mSensor==System::IMU_STEREO || mSensor == System::IMU_RGBD))
                     {
                         mState = LOST;
-                        cout << "\t\tmState is now LOST\n";
                     }
                     else if(pCurrentMap->KeyFramesInMap()>10)
                     {
                         // cout << "KF in map: " << pCurrentMap->KeyFramesInMap() << endl;
                         mState = RECENTLY_LOST;
                         mTimeStampLost = mCurrentFrame.mTimeStamp;
-                        cout << "\t\tmState is now RECENTLY LOST (>10 keyframes in the map)\n";
                     }
                     else
                     {
                         mState = LOST;
-                        cout << "\t\tmState is now LOST\n";
                     }
                 }
             }
             else
             {
-                cout << "\t\tmState is not OK\n";
                 if (mState == RECENTLY_LOST)
                 {
                     Verbose::PrintMess("Lost for a short time", Verbose::VERBOSITY_NORMAL);
@@ -2010,8 +1994,6 @@ void Tracking::Track()
                     }
                     else
                     {
-                        cout << "\t\t\tTRACKING: attempting relocalization\n";
-
                         // Relocalization
                         bOK = Relocalization();
                         //std::cout << "mCurrentFrame.mTimeStamp:" << to_string(mCurrentFrame.mTimeStamp) << std::endl;
@@ -2026,8 +2008,6 @@ void Tracking::Track()
                 }
                 else if (mState == LOST)
                 {
-                    cout << "\t\tmState is LOST\n";
-
                     Verbose::PrintMess("A new map is started...", Verbose::VERBOSITY_NORMAL);
 
                     if (pCurrentMap->KeyFramesInMap()<10)
@@ -2049,41 +2029,29 @@ void Tracking::Track()
         }
         else
         {
-            cout << "\tTRACKING: localization only mode 1\n";
-
             // Localization Mode: Local Mapping is deactivated (TODO Not available in inertial mode)
             if(mState==LOST || mState==RECENTLY_LOST) //modified here: isnt better to set state to LOST instead of RECENTLY LOST?
             {
-                cout << "\t\tmState is LOST\n";
                 if(mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
                     Verbose::PrintMess("IMU. State LOST", Verbose::VERBOSITY_NORMAL);
-                cout << "\t\tTRACKING: attempting relocalization\n";
                 bOK = Relocalization();
             }
             else
             {
                 if(!mbVO)
                 {
-                    cout << "\t\tTRACKING: enough points tracked\n";
                     // In last frame we tracked enough MapPoints in the map
                     if(mbVelocity)
                     {
-                        cout << "\t\tTRACKING: attempting track with motion model\n";
                         bOK = TrackWithMotionModel();
-                        if(!bOK)
-                            cout << "\t\t\tTRACKING: tracking w. motion model failed\n";
                     }
                     else
                     {
-                        cout << "\t\tTRACKING: attempting track ref. KF\n";
                         bOK = TrackReferenceKeyFrame();
-                        if(!bOK)
-                            cout << "\t\t\tTRACKING: track ref. KF failed\n";
                     }
                 }
                 else
                 {
-                    cout << "\t\tTRACKING: not enough points tracked\n";
                     // In last frame we tracked mainly "visual odometry" points.
 
                     // We compute two camera poses, one from motion model and one doing relocalization.
@@ -2097,25 +2065,21 @@ void Tracking::Track()
                     Sophus::SE3f TcwMM;
                     if(mbVelocity)
                     {
-                        cout << "\t\tTRACKING: attempting track with motion model\n";
                         bOKMM = TrackWithMotionModel();
                         vpMPsMM = mCurrentFrame.mvpMapPoints;
                         vbOutMM = mCurrentFrame.mvbOutlier;
                         TcwMM = mCurrentFrame.GetPose();
                     }
-                    cout << "\t\tTRACKING: attempting relocalization\n";
                     bOKReloc = Relocalization();
 
                     if(bOKMM && !bOKReloc)
                     {
-                        cout << "\t\tTRACKING: relocalization failed\n";
                         mCurrentFrame.SetPose(TcwMM);
                         mCurrentFrame.mvpMapPoints = vpMPsMM;
                         mCurrentFrame.mvbOutlier = vbOutMM;
 
                         if(mbVO)
                         {
-                            cout << "\t\tTRACKING: VO ok\n";
                             for(int i =0; i<mCurrentFrame.N; i++)
                             {
                                 if(mCurrentFrame.mvpMapPoints[i] && !mCurrentFrame.mvbOutlier[i])
@@ -2127,13 +2091,10 @@ void Tracking::Track()
                     }
                     else if(bOKReloc)
                     {
-                        cout << "\t\tTRACKING: relocalization ok\n";
                         mbVO = false;
                     }
 
                     bOK = bOKReloc || bOKMM;
-                    if(!bOK)
-                            cout << "\t\t\tTRACKING: relocalization and motion model failed\n";
                 }
             }
         }
@@ -2155,39 +2116,29 @@ void Tracking::Track()
         // If we have an initial estimation of the camera pose and matching. Track the local map.
         if(!mbOnlyTracking)
         {
-            cout << "\tTRACKING: normal mode 2\n";
             if(bOK)
             {
-                cout << "\t\tTRACKING: attempting to track local map\n";
                 bOK = TrackLocalMap();
 
             }
-            if(!bOK)
-                cout << "Fail to track local map!" << endl;
         }
         else
         {
-            cout << "\tTRACKING: localization only mode 2\n";
             // mbVO true means that there are few matches to MapPoints in the map. We cannot retrieve
             // a local map and therefore we do not perform TrackLocalMap(). Once the system relocalizes
             // the camera we will use the local map again.
             if(bOK && !mbVO)
             {
-                cout << "\t\tTRACKING: attempting to track local map\n";
                 bOK = TrackLocalMap();
-                if(!bOK)
-                    cout << "\t\t\tTRACKING: fail to track local map\n";
             }
         }
 
         if(bOK)
         {
             mState = OK;
-            cout << "\tmState is now OK\n";
         }
         else if (mState == OK)
         {
-            cout << "\tmState is OK\n";
             if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
             {
                 Verbose::PrintMess("Track lost for less than one second...", Verbose::VERBOSITY_NORMAL);
@@ -2198,12 +2149,10 @@ void Tracking::Track()
                 }
 
                 mState=RECENTLY_LOST;
-                cout << "\t\tmState is now RECENTLY LOST (IMU related)\n";
             }
             else
             {
                 mState=RECENTLY_LOST; // visual to lost
-                cout << "\t\tmState is now RECENTLY LOST (?)\n";
             }
 
             /*if(mCurrentFrame.mnId>mnLastRelocFrameId+mMaxFrames)
@@ -2319,10 +2268,8 @@ void Tracking::Track()
         // Reset if the camera get lost soon after initialization
         if(mState==LOST)
         {
-            cout << "\tmState is LOST\n";
             if(pCurrentMap->KeyFramesInMap()<=10)
             {
-                cout << "\t\tTRACKING: resetting map\n";
                 mpSystem->ResetActiveMap();
                 return;
             }
